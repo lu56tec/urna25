@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Urna Eletrônica</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+      text-align: center;
+    }
+
+    .tela {
+      margin: 20px auto;
+      width: 300px;
+      background: #111;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .cargo {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .numeros {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .numero {
+      width: 30px;
+      height: 40px;
+      background: white;
+      color: black;
+      margin: 2px;
+      font-size: 20px;
+      line-height: 40px;
+    }
+
+    .info {
+      margin: 10px 0;
+    }
+
+    .teclado {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto 10px;
+    }
+
+    .linha-0 {
+      grid-column: 2;
+    }
+
+    .tecla {
+      background: #333;
+      color: white;
+      font-size: 18px;
+      padding: 15px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      width: 60px;
+      height: 60px;
+    }
+
+    .acoes {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .acoes .tecla {
+      width: 120px;
+      height: 50px;
+      font-size: 16px;
+    }
+
+    .branco {
+      background: white;
+      color: black;
+    }
+
+    .corrige {
+      background: orange;
+      color: black;
+    }
+
+    .confirma {
+      background: green;
+      color: white;
+    }
+
+    .resultado {
+      background: blue;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<audio id="somTecla" src="urna.mp3" preload="auto"></audio>
+<audio id="somFim" src="fim.mp3" preload="auto"></audio>
+
+<div class="tela" id="tela">
+  <div class="cargo" id="cargo">VEREADOR</div>
+  <div class="numeros" id="numeros"></div>
+  <div class="info" id="info"></div>
+</div>
+
+<div class="teclado" id="teclado">
+  <button class="tecla" onclick="digita('1')">1</button>
+  <button class="tecla" onclick="digita('2')">2</button>
+  <button class="tecla" onclick="digita('3')">3</button>
+  <button class="tecla" onclick="digita('4')">4</button>
+  <button class="tecla" onclick="digita('5')">5</button>
+  <button class="tecla" onclick="digita('6')">6</button>
+  <button class="tecla" onclick="digita('7')">7</button>
+  <button class="tecla" onclick="digita('8')">8</button>
+  <button class="tecla" onclick="digita('9')">9</button>
+  <button class="tecla linha-0" onclick="digita('0')">0</button>
+</div>
+
+<div class="acoes">
+  <button class="tecla branco" onclick="branco()">BRANCO</button>
+  <button class="tecla corrige" onclick="corrige()">CORRIGE</button>
+  <button class="tecla confirma" onclick="confirma()">CONFIRMA</button>
+  <button class="tecla resultado" onclick="mostrarResultados()">RESULTADO</button>
+</div>
+
+<script>
+const etapas = [
+  {
+    titulo: "VEREADOR", digitos: 2,
+    candidatos: [
+      {numero: "12", nome: "Mãe", partido: "JB"},
+      {numero: "36", nome: "Vô", partido: "PB"}
+    ]
+  },
+  {
+    titulo: "PREFEITO", digitos: 2,
+    candidatos: [
+      {numero: "21", nome: "Lorena", partido: "PT"},
+      {numero: "59", nome: "Pai", partido: "PC"}
+    ]
+  },
+  {
+    titulo: "PRESIDENTE", digitos: 5,
+    candidatos: [
+      {numero: "12345", nome: "Vó", partido: "PT"},
+      {numero: "23456", nome: "Luiz H.", partido: "PQ"}
+    ]
+  }
+];
+
+let etapaAtual = 0;
+let numero = "";
+let brancoVoto = false;
+let votos = [];
+
+function comecarEtapa() {
+  let etapa = etapas[etapaAtual];
+  numero = "";
+  brancoVoto = false;
+  document.getElementById("cargo").innerHTML = etapa.titulo;
+  document.getElementById("info").innerHTML = "";
+  let nums = "";
+  for (let i = 0; i < etapa.digitos; i++) {
+    nums += `<div class="numero" id="num${i}"></div>`;
+  }
+  document.getElementById("numeros").innerHTML = nums;
+}
+
+function digita(n) {
+  let etapa = etapas[etapaAtual];
+  if (numero.length < etapa.digitos) {
+    numero += n;
+    document.getElementById("num" + (numero.length - 1)).innerHTML = n;
+    document.getElementById("somTecla").play();
+  }
+  if (numero.length === etapa.digitos) {
+    atualizaInterface();
+  }
+}
+
+function atualizaInterface() {
+  let etapa = etapas[etapaAtual];
+  let candidato = etapa.candidatos.find(c => c.numero === numero);
+  if (candidato) {
+    document.getElementById("info").innerHTML = `<strong>${candidato.nome}</strong><br>Partido: ${candidato.partido}`;
+  } else {
+    document.getElementById("info").innerHTML = "<strong>VOTO NULO</strong>";
+  }
+}
+
+function branco() {
+  numero = "";
+  brancoVoto = true;
+  document.getElementById("numeros").innerHTML = "";
+  document.getElementById("info").innerHTML = "<strong>VOTO EM BRANCO</strong>";
+}
+
+function corrige() {
+  comecarEtapa();
+}
+
+function confirma() {
+  let etapa = etapas[etapaAtual];
+  let votoConfirmado = false;
+
+  if (brancoVoto) {
+    votos.push({ etapa: etapa.titulo, voto: "BRANCO" });
+    votoConfirmado = true;
+  } else if (numero.length === etapa.digitos) {
+    let candidato = etapa.candidatos.find(c => c.numero === numero);
+    votos.push({ etapa: etapa.titulo, voto: candidato ? candidato.nome : "NULO" });
+    votoConfirmado = true;
+  }
+
+  if (votoConfirmado) {
+    etapaAtual++;
+    if (etapaAtual < etapas.length) {
+      comecarEtapa();
+    } else {
+      document.getElementById("tela").innerHTML = "<h1>FIM</h1>";
+      document.getElementById("somFim").play();
+      setTimeout(() => {
+        etapaAtual = 0;
+        document.getElementById("tela").innerHTML = `
+          <div class="cargo" id="cargo"></div>
+          <div class="numeros" id="numeros"></div>
+          <div class="info" id="info"></div>
+        `;
+        comecarEtapa();
+      }, 2000);
+    }
+  }
+}
+
+function mostrarResultados() {
+  const senha = prompt("Digite a senha para acessar os resultados:");
+  if (senha !== "Urna2025") {
+    alert("Senha incorreta!");
+    return;
+  }
+
+  let resultados = {};
+
+  votos.forEach(v => {
+    if (!resultados[v.etapa]) {
+      resultados[v.etapa] = {};
+    }
+    if (!resultados[v.etapa][v.voto]) {
+      resultados[v.etapa][v.voto] = 0;
+    }
+    resultados[v.etapa][v.voto]++;
+  });
+
+  let mensagem = "RESULTADO FINAL:\n\n";
+  for (let etapa in resultados) {
+    mensagem += `Cargo: ${etapa}\n`;
+    for (let candidato in resultados[etapa]) {
+      mensagem += `• ${candidato}: ${resultados[etapa][candidato]} voto(s)\n`;
+    }
+    mensagem += "\n";
+  }
+
+  alert(mensagem);
+}
+
+comecarEtapa();
+</script>
+
+</body>
+</html>
